@@ -150,14 +150,61 @@
   };
   window.__wbSetCode=c=>rawSet.call(localStorage,CODE_KEY,String(c||'').trim());
   window.__wbGetCode=code;
+
+  window.wbSetCodeButton=async function(){
+    // prompt FIRST, so a button click is always visibly acknowledged.
+    const c=prompt('请输入 WorkBuddy 同步码。电脑和手机使用同一个。', code()||'');
+    if(c===null)return;
+    window.__wbSetCode(c);
+    const status=document.getElementById('cloudStatus');
+    if(status){status.textContent='云同步：正在连接…';status.className='muted'}
+    try{
+      await window.__wbCloudPull();
+      if(status){status.textContent='云同步：已连接';status.className='ok'}
+      setTimeout(()=>location.reload(),250);
+    }catch(e){
+      if(status){status.textContent='云同步：失败：'+e.message;status.className='err'}
+      alert('同步失败：'+e.message);
+    }
+  };
+
+  window.wbSyncButton=async function(){
+    if(!code()){
+      await window.wbSetCodeButton();
+      return;
+    }
+    const status=document.getElementById('cloudStatus');
+    if(status){status.textContent='云同步：正在同步…';status.className='muted'}
+    try{
+      await window.__wbCloudPull();
+      await window.__wbCloudPush();
+      if(status){status.textContent='云同步：已同步';status.className='ok'}
+      setTimeout(()=>location.reload(),250);
+    }catch(e){
+      if(status){status.textContent='云同步：失败：'+e.message;status.className='err'}
+      alert('同步失败：'+e.message);
+    }
+  };
+
+  window.addEventListener('DOMContentLoaded',()=>{
+    const status=document.getElementById('cloudStatus');
+    if(!status)return;
+    if(code()){
+      status.textContent='云同步：已设置';
+      status.className='ok';
+    }else{
+      status.textContent='云同步：未设置';
+      status.className='muted';
+    }
+  });
 })();
 </script>
 </head>
 <body>
 <div class="cloudbar">
   <span id="cloudStatus" class="muted">云同步：未设置</span>
-  <button id="cloudSetCode">设置同步码</button>
-  <button id="cloudSyncNow">立即同步</button>
+  <button id="cloudSetCode" type="button" onclick="wbSetCodeButton()">设置同步码</button>
+  <button id="cloudSyncNow" type="button" onclick="wbSyncButton()">立即同步</button>
 </div>
 
 <div class="shell">
@@ -767,53 +814,5 @@
 })();
 </script>
 
-<script>
-(function(){
-  function status(t,c){
-    const el=document.getElementById('cloudStatus');
-    if(!el)return;
-    el.textContent='云同步：'+t;
-    el.className=c||'muted';
-  }
-  window.__wbStatus=status;
-  document.getElementById('cloudSetCode').onclick=async()=>{
-    const old=window.__wbGetCode();
-    const c=prompt('请输入 WorkBuddy 同步码。电脑和手机使用同一个。',old||'');
-    if(c===null)return;
-    window.__wbSetCode(c);
-    try{
-      await window.__wbCloudPull();
-      status('已连接','ok');
-      sessionStorage.removeItem('wb_cloud_loaded');
-      location.reload();
-    }catch(e){
-      status('失败：'+e.message,'err');
-      alert(e.message);
-    }
-  };
-  document.getElementById('cloudSyncNow').onclick=async()=>{
-    try{
-      await window.__wbCloudPull();
-      await window.__wbCloudPush();
-      status('已同步','ok');
-      sessionStorage.removeItem('wb_cloud_loaded');
-      location.reload();
-    }catch(e){
-      status('失败：'+e.message,'err');
-      alert(e.message);
-    }
-  };
-  if(window.__wbGetCode()){
-    status('正在读取云端…','muted');
-    window.__wbCloudPull().then(()=>{
-      status('已同步','ok');
-      if(!sessionStorage.getItem('wb_cloud_loaded')){
-        sessionStorage.setItem('wb_cloud_loaded','1');
-        location.reload();
-      }
-    }).catch(e=>status('失败：'+e.message,'err'));
-  }
-})();
-</script>
 </body>
 </html>
