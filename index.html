@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#53677a" />
+  <title>WorkBuddy · 个人建设台</title>
+  <style>
+    :root{
+      --bg:#f4f3ef; --panel:#ffffff; --panel2:#eef2f4; --ink:#26313b; --muted:#6f7b85;
+      --line:#d9dee2; --accent:#53677a; --accent2:#8b7567; --ok:#587263; --warn:#8d6d4f;
+      --shadow:0 10px 28px rgba(38,49,59,.08); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+      background:linear-gradient(180deg,#eef2f4 0,#f6f4ef 220px,#f4f3ef 100%); color:var(--ink);
+      line-height:1.55;
+    }
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    .shell{max-width:1100px;margin:0 auto;padding:18px 14px 90px}
+    header{
+      background:rgba(255,255,255,.88); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.7);
+      box-shadow:var(--shadow); border-radius:24px; padding:20px; margin-bottom:14px;
+    }
+    h1{font-size:28px;margin:0 0 6px;letter-spacing:.2px}
+    h2{font-size:20px;margin:0 0 12px}
+    h3{font-size:16px;margin:0 0 8px}
+    .sub{color:var(--muted);font-size:14px}
+    .motto{margin-top:12px;padding:11px 13px;border-left:4px solid var(--accent);background:var(--panel2);border-radius:10px}
+    .tabs{
+      position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow:auto;padding:8px 2px 12px;
+      background:linear-gradient(180deg,rgba(244,243,239,.96),rgba(244,243,239,.78),rgba(244,243,239,0));
+    }
+    .tab{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 13px;border-radius:999px;white-space:nowrap}
+    .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .view{display:none}.view.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:0 5px 18px rgba(38,49,59,.045)
+    }
+    .span12{grid-column:span 12}.span8{grid-column:span 8}.span6{grid-column:span 6}.span4{grid-column:span 4}
+    @media(max-width:780px){.span8,.span6,.span4{grid-column:span 12}.shell{padding:10px 10px 80px}h1{font-size:24px}}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+    input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{
+      width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 11px;background:#fbfbfa;color:var(--ink);outline:none
+    }
+    textarea{min-height:82px;resize:vertical}
+    input:focus,textarea:focus,select:focus{border-color:#99a8b4;box-shadow:0 0 0 3px rgba(83,103,122,.11)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+    .btn{
+      border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 12px;border-radius:12px;box-shadow:none
+    }
+    .btn.primary{background:var(--accent);color:white;border-color:var(--accent)}
+    .btn.soft{background:var(--panel2)}
+    .btn.danger{color:#7c4f4f}
+    .small{font-size:12px;color:var(--muted)}
+    .pill{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:var(--panel2);margin:2px 4px 2px 0}
+    .task{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px dashed var(--line)}
+    .task:last-child{border-bottom:0}.task input{margin-top:4px}.task .txt{flex:1}
+    .task .txt.done{text-decoration:line-through;color:var(--muted)}
+    .energy-wrap{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+    input[type=range]{width:100%}
+    .score{font-size:25px;font-weight:700;min-width:42px;text-align:center}
+    .quiet{background:#f7f6f2}
+    .fact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    @media(max-width:700px){.fact-grid{grid-template-columns:1fr}}
+    .fact-grid .box{padding:12px;border:1px solid var(--line);border-radius:14px;background:#fbfbfa}
+    .fact-grid .box:nth-child(1){border-top:4px solid #6d8293}
+    .fact-grid .box:nth-child(2){border-top:4px solid #a58c7e}
+    .fact-grid .box:nth-child(3){border-top:4px solid #728b78}
+    .status{
+      padding:10px 12px;border-radius:12px;background:#eef4ef;color:#466151;font-size:13px;display:none;margin-top:10px
+    }
+    .status.show{display:block}
+    .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    @media(max-width:650px){.statgrid{grid-template-columns:repeat(2,1fr)}}
+    .stat{padding:12px;border-radius:14px;background:var(--panel2)}
+    .stat b{display:block;font-size:22px}
+    .history-item{padding:11px 0;border-bottom:1px solid var(--line)}
+    .history-item:last-child{border-bottom:0}
+    .bar{height:8px;background:#e8ecef;border-radius:99px;overflow:hidden;margin-top:5px}
+    .bar>i{display:block;height:100%;background:var(--accent);border-radius:99px}
+    details{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#fbfbfa}
+    details+details{margin-top:8px}
+    summary{cursor:pointer;font-weight:600}
+    .reminder-row{display:grid;grid-template-columns:90px 1fr auto;gap:8px;align-items:center;margin:8px 0}
+    @media(max-width:600px){.reminder-row{grid-template-columns:80px 1fr}.reminder-row button{grid-column:2}}
+    .footer-note{font-size:12px;color:var(--muted);margin-top:14px}
+    .tagline{font-weight:600}
+    .mini-line{height:1px;background:var(--line);margin:12px 0}
+    .profile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    @media(max-width:650px){.profile-grid{grid-template-columns:1fr}}
+    .profile-chip{padding:10px 12px;border-radius:14px;background:#f7f7f5;border:1px solid var(--line)}
+    .right{margin-left:auto}
+    .linklike{color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+    .no-score{font-weight:600;color:#526b5a}
+    .notice{padding:12px;background:#fff8ed;border:1px solid #ead9c4;border-radius:14px;color:#715a43;font-size:13px}
+
+    .cloudbar{position:sticky;top:0;z-index:30;display:flex;gap:10px;align-items:center;justify-content:center;padding:8px 12px;background:#26313b;color:#fff;font-size:13px}
+    .cloudbar button{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;padding:5px 9px;border-radius:999px}
+    .cloudbar .ok{color:#bfe2c8}.cloudbar .err{color:#ffd0d0}.cloudbar .muted{color:#d7dde1}
+  </style>
+\n<script>\n(function(){\n  const WB_KEY='workbuddy_v1';\n  const CODE_KEY='workbuddy_sync_code';\n  const ENDPOINT='https://uxcvllaycaknojgkqqss.supabase.co/functions/v1/workbuddy';\n  const rawSet=Storage.prototype.setItem;\n  let timer=null;\n  window.__wbCloud={busy:false};\n  function code(){return localStorage.getItem(CODE_KEY)||''}\n  async function api(body){\n    const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,code:code()})});\n    const j=await r.json().catch(()=>({error:'服务器返回格式异常'}));\n    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));\n    return j;\n  }\n  function timeOf(x){const n=Date.parse(x?.updatedAt||x?._updatedAt||'');return Number.isFinite(n)?n:0}\n  function mergeRec(a={},b={}){const out={...(a||{})};for(const [k,v] of Object.entries(b||{})){if(!out[k]||timeOf(v)>=timeOf(out[k]))out[k]=v}return out}\n  function mergeState(local={},remote={}){return {days:mergeRec(local.days,remote.days),weeks:mergeRec(local.weeks,remote.weeks),months:mergeRec(local.months,remote.months),settings:{...(remote.settings||{}),...(local.settings||{})}}}\n  async function pushNow(){\n    if(!code()||window.__wbCloud.busy)return;\n    const raw=localStorage.getItem(WB_KEY); if(!raw)return;\n    try{window.__wbCloud.busy=true;window.__wbStatus&&window.__wbStatus('正在同步…','muted');const j=await api({action:'push',payload:JSON.parse(raw)});rawSet.call(localStorage,WB_KEY,JSON.stringify(j.payload));window.__wbStatus&&window.__wbStatus('已同步','ok')}\n    catch(e){window.__wbStatus&&window.__wbStatus('同步失败：'+e.message,'err')}finally{window.__wbCloud.busy=false}\n  }\n  Storage.prototype.setItem=function(k,v){rawSet.call(this,k,v);if(this===localStorage&&k===WB_KEY&&code()&&!window.__wbCloud.busy){clearTimeout(timer);timer=setTimeout(pushNow,500)}};\n  window.__wbCloudPush=pushNow;\n  window.__wbCloudPull=async function(){if(!code())throw new Error('请先设置同步码');const j=await api({action:'pull'});const local=JSON.parse(localStorage.getItem(WB_KEY)||'{}');const merged=mergeState(local,j.payload||{});rawSet.call(localStorage,WB_KEY,JSON.stringify(merged));return merged};\n  window.__wbSetCode=c=>rawSet.call(localStorage,CODE_KEY,String(c||'').trim());\n  window.__wbGetCode=code;\n})();\n</script>\n</head>
+<body>
+<div class="cloudbar">
+  <span id="cloudStatus" class="muted">云同步：未设置</span>
+  <button id="cloudSetCode">设置同步码</button>
+  <button id="cloudSyncNow">立即同步</button>
+</div>
+
+<div class="shell">
+  <header>
+    <div class="row">
+      <div style="flex:3">
+        <h1>WorkBuddy · 个人建设台</h1>
+        <div class="sub">不是打卡器，不评判你。它只帮你把注意力从“别人怎么看我”收回到“我今天怎么活”。</div>
+      </div>
+      <div style="min-width:190px">
+        <label>当前日期</label>
+        <input id="currentDate" type="date">
+      </div>
+    </div>
+    <div class="motto"><b>事实 → 解释 → 行动。</b> 最后只问一句：<b>这件事现在需要什么行动？</b></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-view="today">今天</button>
+    <button class="tab" data-view="week">本周</button>
+    <button class="tab" data-view="month">本月</button>
+    <button class="tab" data-view="history">记录</button>
+    <button class="tab" data-view="reminders">提醒</button>
+    <button class="tab" data-view="export">导出</button>
+    <button class="tab" data-view="profile">我的设定</button>
+  </nav>
+
+  <section id="today" class="view active">
+    <div class="grid">
+      <div class="card span4">
+        <h2>Energy</h2>
+        <div class="sub">只是测电量，不是给自己打分。</div>
+        <div class="energy-wrap">
+          <input id="energy" type="range" min="0" max="10" step="1" value="5">
+          <div id="energyNum" class="score">5</div>
+        </div>
+        <label style="margin-top:10px">昨晚睡了多久（可选）</label>
+        <input id="sleepHours" type="number" step="0.5" min="0" max="16" placeholder="例如 6.5">
+        <label style="margin-top:10px">今天计划几点停止刷短视频/游戏</label>
+        <input id="screenStop" type="time" value="23:30">
+      </div>
+
+      <div class="card span8">
+        <h2>今天只保留这些事</h2>
+        <div class="sub">做最小版本即可；没有“连续打卡”，也没有补作业。</div>
+        <div id="dailyTasks"></div>
+      </div>
+
+      <div class="card span12 quiet">
+        <div class="row">
+          <div>
+            <h2>刺猬时刻：事实 / 解释 / 行动</h2>
+            <div class="sub">白天任何时候都可以写，不用等晚上。</div>
+          </div>
+          <button class="btn soft" id="clearFIA">清空这一格</button>
+        </div>
+        <div class="fact-grid">
+          <div class="box">
+            <h3>1. 事实</h3>
+            <div class="small">摄像头能拍到、聊天记录能证明的部分。</div>
+            <textarea id="fact" placeholder="例：我发了一条工作消息，2小时没有回复。"></textarea>
+          </div>
+          <div class="box">
+            <h3>2. 解释</h3>
+            <div class="small">我脑子自动补了什么？先承认它只是解释。</div>
+            <textarea id="interpretation" placeholder="例：她是不是觉得我说得很蠢 / 不想理我。"></textarea>
+          </div>
+          <div class="box">
+            <h3>3. 行动</h3>
+            <div class="small">真的需要行动吗？如果需要，只写最小动作。</div>
+            <textarea id="action" placeholder="例：若明早仍未回复，追问一次；否则不行动。"></textarea>
+            <button class="btn" id="noAction" style="margin-top:8px">这件事不需要行动</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card span6">
+        <h2>Work · 今天真正完成的一件事</h2>
+        <textarea id="workDone" placeholder="只写一个可见结果：一张图、一个脚本、一段实验记录、一次推进。"></textarea>
+      </div>
+
+      <div class="card span6">
+        <h2>Joy · 30分钟无绩效快乐</h2>
+        <div class="sub">不创造价值也可以：游戏、散步、跳舞、羽毛球、躺着、和舒服的人聊天。</div>
+        <textarea id="joy" placeholder="今天哪一小段时间让我舒服了一点？"></textarea>
+      </div>
+
+      <div class="card span6">
+        <h2>Body · 不用体重和卡路里评价身体</h2>
+        <label>今天三餐</label>
+        <select id="meals">
+          <option value="">不想记录</option>
+          <option>大致规律</option>
+          <option>有漏餐/拖太久</option>
+          <option>节奏很乱</option>
+        </select>
+        <label style="margin-top:10px">今天进食感受</label>
+        <select id="eating">
+          <option value="">不想记录</option>
+          <option>整体平稳</option>
+          <option>有明显失控感</option>
+          <option>吃多了，但没有补偿性节食</option>
+        </select>
+        <label style="margin-top:10px">活动（不是为了抵消食物）</label>
+        <input id="movement" type="text" placeholder="例如：散步20分钟 / 跳两首歌 / 没有也没关系">
+      </div>
+
+      <div class="card span6">
+        <h2>People · 今天最耗我的一次互动</h2>
+        <textarea id="people" placeholder="写事实即可。不要替对方写心理活动。"></textarea>
+        <label style="margin-top:10px">我给这件事的边界</label>
+        <input id="boundary" type="text" placeholder="例：只处理工作，不追问态度；重要事项走书面。">
+      </div>
+
+      <div class="card span12">
+        <div class="row">
+          <div>
+            <h2>留住今天</h2>
+            <div class="sub">你可以白天反复保存。晚上只是最后一次补充，不是唯一复盘时刻。</div>
+          </div>
+          <button class="btn primary" id="saveToday">保存今天</button>
+        </div>
+        <div id="saveStatus" class="status">已保存。</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="week" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <h2>本周 · 9—11月实验</h2>
+        <div class="sub">目标不是证明你适合哪条路，而是积累证据。</div>
+        <div id="weeklyTasks"></div>
+      </div>
+      <div class="card span6">
+        <h2>SAR / 遥感专业能力</h2>
+        <label>本周完成 30 分钟学习次数（目标 3 次）</label>
+        <input id="sarCount" type="number" min="0" max="14" value="0">
+        <label style="margin-top:10px">本周学了什么</label>
+        <textarea id="sarNote" placeholder="只学与你当前任务直接相关的一项。"></textarea>
+      </div>
+      <div class="card span6">
+        <h2>考公低成本实验</h2>
+        <label>本周投入分钟数（参考 120 分钟）</label>
+        <input id="examMinutes" type="number" min="0" step="10" value="0">
+        <label style="margin-top:10px">真实感受</label>
+        <textarea id="examNote" placeholder="题目难不难不是重点：我是否愿意持续做？"></textarea>
+      </div>
+      <div class="card span6">
+        <h2>属于我的技术结果</h2>
+        <textarea id="techArtifact" placeholder="图 / 代码 / 实验记录 / 方法说明 / 一页汇报。"></textarea>
+      </div>
+      <div class="card span6">
+        <h2>社交剂量</h2>
+        <div class="sub">每两周一次真正想见的人即可，不因为“应该维护关系”强迫自己跑一趟。</div>
+        <label>这周是否见了让你放松的人？</label>
+        <select id="social">
+          <option value="">不记录</option>
+          <option>没有，这周也不需要</option>
+          <option>见了，整体是充电</option>
+          <option>见了，但恢复成本偏高</option>
+        </select>
+        <label style="margin-top:10px">成本/收益备注</label>
+        <textarea id="socialNote" placeholder="花费、睡眠、路程、开心程度；不做道德判断。"></textarea>
+      </div>
+      <div class="card span12">
+        <h2>本周复盘：哪些“刺猬时刻”其实不需要行动？</h2>
+        <textarea id="weekReflection" placeholder="例：3次因为别人没回消息而反复想，最后真正需要追问的只有1次。"></textarea>
+        <div class="row" style="margin-top:10px">
+          <div></div><button class="btn primary" id="saveWeek">保存本周</button>
+        </div>
+        <div id="weekStatus" class="status">已保存本周。</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="month" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <h2>本月不是做人生决定，是做一次路线评估</h2>
+        <div class="notice">只比较“这条路目前给我的真实体验”，不使用星座、MBTI或八字替你做职业决定。</div>
+      </div>
+      <div class="card span6">
+        <h2>当前科研/技术路线</h2>
+        <div id="jobScores"></div>
+      </div>
+      <div class="card span6">
+        <h2>考公路线</h2>
+        <div id="examScores"></div>
+      </div>
+      <div class="card span6">
+        <h2>身体与作息</h2>
+        <label>这个月整体睡眠</label>
+        <select id="monthSleep">
+          <option value="">不记录</option><option>比上月更稳定</option><option>差不多</option><option>更乱</option>
+        </select>
+        <label style="margin-top:10px">进食稳定度</label>
+        <select id="monthEating">
+          <option value="">不记录</option><option>整体更稳定</option><option>差不多</option><option>失控感更频繁</option>
+        </select>
+        <label style="margin-top:10px">身体给我的主要信号</label>
+        <textarea id="bodySignal" placeholder="疲劳、喉咙、月经前后、胃口、活动欲望等，只记录，不自行诊断。"></textarea>
+      </div>
+      <div class="card span6">
+        <h2>关系与快乐</h2>
+        <label>最充电的一次相处</label>
+        <textarea id="bestSocial"></textarea>
+        <label style="margin-top:10px">我愿意继续保留的快乐</label>
+        <textarea id="bestJoy"></textarea>
+      </div>
+      <div class="card span12">
+        <h2>下个月只做一个实验</h2>
+        <textarea id="nextExperiment" placeholder="例：每周三次 30 分钟 SAR；或连续四周每周只做 2 小时行测。不要写“我要改变人生”。"></textarea>
+        <div class="row" style="margin-top:10px">
+          <div></div><button class="btn primary" id="saveMonth">保存本月</button>
+        </div>
+        <div id="monthStatus" class="status">已保存本月。</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="history" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <div class="row">
+          <div>
+            <h2>最近记录</h2>
+            <div class="sub">没有“断签”。哪天没写，就是那天没写。</div>
+          </div>
+          <select id="historyRange" style="max-width:180px">
+            <option value="14">最近14天</option>
+            <option value="30" selected>最近30天</option>
+            <option value="90">最近90天</option>
+            <option value="9999">全部</option>
+          </select>
+        </div>
+        <div id="historyStats" class="statgrid" style="margin:12px 0"></div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reminders" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <h2>提醒：白天也可以</h2>
+        <div class="notice">
+          这个离线网页在“页面打开时”可以弹系统通知；页面完全关闭后，浏览器通常不会可靠后台定时。
+          想要真正后台提醒，请点下面的“导出到系统日历 .ics”，导入手机日历后由系统提醒。
+        </div>
+        <div id="reminderList" style="margin-top:12px"></div>
+        <button class="btn" id="addReminder">+ 增加提醒</button>
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="enableNotify">允许浏览器通知</button>
+          <button class="btn" id="exportICS">导出到系统日历 (.ics)</button>
+        </div>
+        <div class="footer-note">默认提醒只是起点，可随时改：上午“停止读心”、下午“身体/快乐”、晚上“留住今天”。</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="export" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <h2>把记录带给 ChatGPT</h2>
+        <div class="sub">Markdown 最适合直接上传或粘贴给我；JSON 用于完整备份；CSV 适合自己做表格分析。</div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="exportMD">导出最近30天 Markdown</button>
+          <button class="btn" id="exportCSV">导出每日记录 CSV</button>
+          <button class="btn" id="exportJSON">完整备份 JSON</button>
+        </div>
+        <div class="mini-line"></div>
+        <h3>恢复备份</h3>
+        <input type="file" id="importJSON" accept=".json,application/json">
+        <div class="small">导入会合并并覆盖同日期记录。建议先导出一次备份。</div>
+      </div>
+      <div class="card span12">
+        <h2>给 ChatGPT 的摘要预览</h2>
+        <textarea id="mdPreview" style="min-height:300px"></textarea>
+        <button class="btn" id="refreshPreview" style="margin-top:8px">刷新预览</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="profile" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <h2>这个版本为什么这样设计</h2>
+        <div class="profile-grid">
+          <div class="profile-chip"><b>你自述的 INFJ 偏好</b><br><span class="small">减少社交噪声、减少即时回应压力；把“别人怎么想”改写成可验证事实。</span></div>
+          <div class="profile-chip"><b>星座 / 星盘只做叙事与美学</b><br><span class="small">用柔和、平衡、留白的界面，不用星座替你判断同事动机、健康或职业。</span></div>
+          <div class="profile-chip"><b>你的恢复条件</b><br><span class="small">低压力、无绩效要求、有人陪但不察言观色、有身体活动、有完整时间、不需要证明自己。</span></div>
+          <div class="profile-chip"><b>你的身体规则</b><br><span class="small">不记录卡路里、不设置目标体重、不设置连续打卡；重点看规律进食、睡眠、活动与失控感。</span></div>
+          <div class="profile-chip"><b>你的工作实验</b><br><span class="small">9—11月不做二选一：技术线积累可见成果，同时用低成本考公练习收集真实数据。</span></div>
+          <div class="profile-chip"><b>你的社交剂量</b><br><span class="small">保留真正让你开心的人，但允许降低频率和过夜/路程成本，不把“维护关系”当任务。</span></div>
+        </div>
+      </div>
+      <div class="card span12">
+        <h2>我的个人提醒句</h2>
+        <textarea id="personalMantra">别人不回复、误解我、甚至不太喜欢我，我仍然可以继续过我的一天。</textarea>
+        <button class="btn" id="saveMantra" style="margin-top:8px">保存</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id)=>document.getElementById(id);
+  const KEY='workbuddy_v1';
+  const defaultData = {
+    days:{}, weeks:{}, months:{},
+    settings:{
+      mantra:'别人不回复、误解我、甚至不太喜欢我，我仍然可以继续过我的一天。',
+      reminders:[
+        {time:'10:30', text:'停止读心：事实是什么？这件事现在需要行动吗？'},
+        {time:'15:30', text:'给身体和大脑一点无绩效时间：走动、发呆、喝水、晒太阳都可以。'},
+        {time:'21:30', text:'把今天留下来：3分钟 WorkBuddy 复盘，不做自我审判。'}
+      ],
+      notified:{}
+    }
+  };
+  let data = load();
+
+  function clone(x){return JSON.parse(JSON.stringify(x))}
+  function load(){
+    try{
+      const raw=localStorage.getItem(KEY);
+      if(!raw) return clone(defaultData);
+      const d=JSON.parse(raw);
+      d.days=d.days||{}; d.weeks=d.weeks||{}; d.months=d.months||{}; d.settings=d.settings||{};
+      d.settings.reminders=d.settings.reminders||clone(defaultData.settings.reminders);
+      d.settings.notified=d.settings.notified||{};
+      d.settings.mantra=d.settings.mantra||defaultData.settings.mantra;
+      return d;
+    }catch(e){return clone(defaultData)}
+  }
+  function persist(){localStorage.setItem(KEY, JSON.stringify(data))}
+  function isoDate(d=new Date()){
+    const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+    return z.toISOString().slice(0,10);
+  }
+  function monthKey(dateStr){return dateStr.slice(0,7)}
+  function weekKey(dateStr){
+    const d=new Date(dateStr+'T12:00:00'); const day=(d.getDay()+6)%7;
+    d.setDate(d.getDate()-day);
+    return isoDate(d);
+  }
+  function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function flash(id,msg){
+    const el=$(id); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800);
+  }
+  function download(name, content, type='text/plain;charset=utf-8'){
+    const blob=new Blob([content],{type}); const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); $(b.dataset.view).classList.add('active');
+    if(b.dataset.view==='history') renderHistory();
+    if(b.dataset.view==='export') refreshPreview();
+    if(b.dataset.view==='reminders') renderReminders();
+  });
+
+  const dailyTaskDefs=[
+    ['regularMeals','三餐大致正常；不因为前一顿吃多而补偿性节食。'],
+    ['joy30','至少留 30 分钟“纯消费型快乐”，不要求产出。'],
+    ['fia','遇到反复想的人际事件，至少做一次“事实→解释→行动”。'],
+    ['tinyWork','工作只抓一个可见结果，不用证明自己全天都高效。'],
+    ['move','给身体一点活动：散步 / 跳舞 / 羽毛球 / 健身房踩点，最小版本也算。']
+  ];
+  const weeklyTaskDefs=[
+    ['artifact','产出 1 个属于自己的技术结果：图、代码、实验记录、方法说明均可。'],
+    ['sar3','SAR/遥感：3 次 × 30 分钟，只学当前任务直接相关的一项。'],
+    ['exam2h','考公：固定约 2 小时，收集“我是否愿意持续准备”的真实数据。'],
+    ['socialDose','社交按剂量：两周一次真正想见的人即可；不为了“应该维护”硬跑。'],
+    ['reviewHedgehog','回看本周刺猬时刻：真正需要行动的有几次？']
+  ];
+  const scoreDims=['兴趣','能量消耗（分高=更省电）','成长性','工作时间友好','收入稳定','地点/生活兼容'];
+
+  function renderTasks(containerId, defs, state){
+    const box=$(containerId); box.innerHTML='';
+    defs.forEach(([k,t])=>{
+      const div=document.createElement('div'); div.className='task';
+      const checked=!!(state&&state[k]);
+      div.innerHTML=`<input type="checkbox" data-k="${k}" ${checked?'checked':''}><div class="txt ${checked?'done':''}">${esc(t)}</div>`;
+      const cb=div.querySelector('input'); cb.onchange=()=>div.querySelector('.txt').classList.toggle('done',cb.checked);
+      box.appendChild(div);
+    });
+  }
+  function collectTasks(containerId){
+    const o={}; $(containerId).querySelectorAll('input[type=checkbox]').forEach(x=>o[x.dataset.k]=x.checked); return o;
+  }
+  function renderScores(containerId, prefix, saved={}){
+    const box=$(containerId); box.innerHTML='';
+    scoreDims.forEach((dim,i)=>{
+      const val=saved[i] ?? 5;
+      const wrap=document.createElement('div'); wrap.style.marginBottom='12px';
+      wrap.innerHTML=`<label>${esc(dim)}</label><div class="energy-wrap"><input type="range" min="1" max="10" value="${val}" data-i="${i}" data-prefix="${prefix}"><div class="score" style="font-size:18px">${val}</div></div>`;
+      const r=wrap.querySelector('input'); const n=wrap.querySelector('.score'); r.oninput=()=>n.textContent=r.value; box.appendChild(wrap);
+    })
+  }
+  function getScores(containerId){
+    return [...$(containerId).querySelectorAll('input[type=range]')].map(x=>Number(x.value));
+  }
+
+  // date init
+  $('currentDate').value=isoDate();
+  $('currentDate').onchange=()=>loadDay();
+
+  $('energy').oninput=()=> $('energyNum').textContent=$('energy').value;
+  $('noAction').onclick=()=>{$('action').value='不需要行动。停止继续推演，回到手头的事。'};
+  $('clearFIA').onclick=()=>{['fact','interpretation','action'].forEach(id=>$(id).value='')};
+
+  function loadDay(){
+    const d=$('currentDate').value || isoDate(); const x=data.days[d]||{};
+    $('energy').value=x.energy ?? 5; $('energyNum').textContent=$('energy').value;
+    $('sleepHours').value=x.sleepHours ?? '';
+    $('screenStop').value=x.screenStop || '23:30';
+    $('fact').value=x.fact||''; $('interpretation').value=x.interpretation||''; $('action').value=x.action||'';
+    $('workDone').value=x.workDone||''; $('joy').value=x.joy||''; $('meals').value=x.meals||'';
+    $('eating').value=x.eating||''; $('movement').value=x.movement||''; $('people').value=x.people||'';
+    $('boundary').value=x.boundary||'';
+    renderTasks('dailyTasks',dailyTaskDefs,x.tasks||{});
+  }
+  $('saveToday').onclick=()=>{
+    const d=$('currentDate').value || isoDate();
+    data.days[d]={
+      energy:Number($('energy').value), sleepHours:$('sleepHours').value, screenStop:$('screenStop').value,
+      fact:$('fact').value.trim(), interpretation:$('interpretation').value.trim(), action:$('action').value.trim(),
+      workDone:$('workDone').value.trim(), joy:$('joy').value.trim(), meals:$('meals').value, eating:$('eating').value,
+      movement:$('movement').value.trim(), people:$('people').value.trim(), boundary:$('boundary').value.trim(),
+      tasks:collectTasks('dailyTasks'), updatedAt:new Date().toISOString()
+    };
+    persist(); flash('saveStatus','已保存今天。你不需要等晚上，也不需要“补完”。');
+  };
+
+  function loadWeek(){
+    const wk=weekKey($('currentDate').value||isoDate()); const x=data.weeks[wk]||{};
+    renderTasks('weeklyTasks',weeklyTaskDefs,x.tasks||{});
+    $('sarCount').value=x.sarCount??0; $('sarNote').value=x.sarNote||''; $('examMinutes').value=x.examMinutes??0;
+    $('examNote').value=x.examNote||''; $('techArtifact').value=x.techArtifact||''; $('social').value=x.social||'';
+    $('socialNote').value=x.socialNote||''; $('weekReflection').value=x.weekReflection||'';
+  }
+  $('saveWeek').onclick=()=>{
+    const wk=weekKey($('currentDate').value||isoDate());
+    data.weeks[wk]={tasks:collectTasks('weeklyTasks'),sarCount:Number($('sarCount').value||0),sarNote:$('sarNote').value.trim(),
+      examMinutes:Number($('examMinutes').value||0),examNote:$('examNote').value.trim(),techArtifact:$('techArtifact').value.trim(),
+      social:$('social').value,socialNote:$('socialNote').value.trim(),weekReflection:$('weekReflection').value.trim(),
+      updatedAt:new Date().toISOString()};
+    persist(); flash('weekStatus','已保存本周。');
+  };
+
+  function loadMonth(){
+    const mk=monthKey($('currentDate').value||isoDate()); const x=data.months[mk]||{};
+    renderScores('jobScores','job',x.jobScores||[]);
+    renderScores('examScores','exam',x.examScores||[]);
+    $('monthSleep').value=x.monthSleep||''; $('monthEating').value=x.monthEating||''; $('bodySignal').value=x.bodySignal||'';
+    $('bestSocial').value=x.bestSocial||''; $('bestJoy').value=x.bestJoy||''; $('nextExperiment').value=x.nextExperiment||'';
+  }
+  $('saveMonth').onclick=()=>{
+    const mk=monthKey($('currentDate').value||isoDate());
+    data.months[mk]={jobScores:getScores('jobScores'),examScores:getScores('examScores'),monthSleep:$('monthSleep').value,
+      monthEating:$('monthEating').value,bodySignal:$('bodySignal').value.trim(),bestSocial:$('bestSocial').value.trim(),
+      bestJoy:$('bestJoy').value.trim(),nextExperiment:$('nextExperiment').value.trim(),updatedAt:new Date().toISOString()};
+    persist(); flash('monthStatus','已保存本月。');
+  };
+
+  function renderHistory(){
+    const n=Number($('historyRange').value); const end=new Date(); const start=new Date(); start.setDate(end.getDate()-n+1);
+    const items=Object.entries(data.days).filter(([d])=>n>9000 || new Date(d+'T12:00:00')>=start).sort((a,b)=>b[0].localeCompare(a[0]));
+    const energies=items.map(([,x])=>x.energy).filter(Number.isFinite);
+    const avg=energies.length?(energies.reduce((a,b)=>a+b,0)/energies.length).toFixed(1):'—';
+    const joyN=items.filter(([,x])=>x.joy).length;
+    const fiaN=items.filter(([,x])=>x.fact||x.interpretation||x.action).length;
+    const stableEat=items.filter(([,x])=>x.eating==='整体平稳'||x.eating==='吃多了，但没有补偿性节食').length;
+    $('historyStats').innerHTML=`
+      <div class="stat"><span class="small">记录天数</span><b>${items.length}</b></div>
+      <div class="stat"><span class="small">平均 Energy</span><b>${avg}</b></div>
+      <div class="stat"><span class="small">写过 Joy</span><b>${joyN}</b></div>
+      <div class="stat"><span class="small">做过事实拆分</span><b>${fiaN}</b></div>`;
+    $('historyList').innerHTML=items.length?items.map(([d,x])=>`
+      <div class="history-item">
+        <div class="row"><b>${d}</b><span class="pill">Energy ${x.energy ?? '—'}/10</span><span class="pill">${esc(x.eating||'进食未记')}</span></div>
+        ${x.workDone?`<div><span class="small">Work：</span>${esc(x.workDone)}</div>`:''}
+        ${x.joy?`<div><span class="small">Joy：</span>${esc(x.joy)}</div>`:''}
+        ${x.fact?`<details><summary>刺猬时刻</summary><div class="small">事实</div><div>${esc(x.fact)}</div><div class="small" style="margin-top:6px">解释</div><div>${esc(x.interpretation||'')}</div><div class="small" style="margin-top:6px">行动</div><div>${esc(x.action||'')}</div></details>`:''}
+      </div>`).join(''):'<div class="sub">还没有记录。今天写一行也算。</div>';
+  }
+  $('historyRange').onchange=renderHistory;
+
+  // Reminders
+  function renderReminders(){
+    const box=$('reminderList'); box.innerHTML='';
+    data.settings.reminders.forEach((r,i)=>{
+      const row=document.createElement('div'); row.className='reminder-row';
+      row.innerHTML=`<input type="time" value="${esc(r.time)}" data-i="${i}" class="rtime"><input type="text" value="${esc(r.text)}" data-i="${i}" class="rtext"><button class="btn danger" data-del="${i}">删除</button>`;
+      box.appendChild(row);
+    });
+    box.querySelectorAll('.rtime').forEach(el=>el.onchange=()=>{data.settings.reminders[Number(el.dataset.i)].time=el.value;persist()});
+    box.querySelectorAll('.rtext').forEach(el=>el.onchange=()=>{data.settings.reminders[Number(el.dataset.i)].text=el.value;persist()});
+    box.querySelectorAll('[data-del]').forEach(el=>el.onclick=()=>{data.settings.reminders.splice(Number(el.dataset.del),1);persist();renderReminders()});
+  }
+  $('addReminder').onclick=()=>{data.settings.reminders.push({time:'12:00',text:'回到自己：现在最小需要做什么？'});persist();renderReminders()};
+  $('enableNotify').onclick=async()=>{
+    if(!('Notification' in window)){alert('当前浏览器不支持系统通知。可以使用“导出到系统日历”。');return}
+    const p=await Notification.requestPermission(); alert(p==='granted'?'已允许。网页打开时会按时提醒。':'没有获得通知权限。');
+  };
+  function checkReminders(){
+    const now=new Date(); const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
+    const key=isoDate(now); data.settings.notified[key]=data.settings.notified[key]||{};
+    data.settings.reminders.forEach((r,i)=>{
+      if(r.time===`${hh}:${mm}` && !data.settings.notified[key][i]){
+        data.settings.notified[key][i]=true; persist();
+        if('Notification' in window && Notification.permission==='granted') new Notification('WorkBuddy', {body:r.text});
+        else alert('WorkBuddy：'+r.text);
+      }
+    });
+    // keep only 10 days
+    Object.keys(data.settings.notified).sort().slice(0,-10).forEach(k=>delete data.settings.notified[k]);
+  }
+  setInterval(checkReminders,30000); checkReminders();
+
+  $('exportICS').onclick=()=>{
+    const today=$('currentDate').value||isoDate();
+    const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//WorkBuddy//CN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+    const clean=s=>String(s).replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');
+    data.settings.reminders.forEach((r,i)=>{
+      const t=(r.time||'12:00').replace(':','')+'00';
+      lines.push('BEGIN:VEVENT',`UID:workbuddy-${i}-${Date.now()}@local`,`DTSTART:${today.replace(/-/g,'')}T${t}`,
+        'RRULE:FREQ=DAILY',`SUMMARY:${clean('WorkBuddy：'+r.text)}`,'BEGIN:VALARM','TRIGGER:-PT0M','ACTION:DISPLAY',
+        `DESCRIPTION:${clean(r.text)}`,'END:VALARM','END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    download('WorkBuddy_每日提醒.ics',lines.join('\r\n'),'text/calendar;charset=utf-8');
+  };
+
+  // Export
+  function recentDays(limit=30){
+    const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-limit+1);
+    return Object.entries(data.days).filter(([d])=>new Date(d+'T12:00:00')>=cutoff).sort((a,b)=>a[0].localeCompare(b[0]));
+  }
+  function makeMD(){
+    const days=recentDays(30); const wk=weekKey(isoDate()); const mk=monthKey(isoDate());
+    let s=`# WorkBuddy 最近30天记录\n\n`;
+    s+=`> 设计原则：事实 → 解释 → 行动；不记录卡路里和目标体重；没有连续打卡。\n\n`;
+    for(const [d,x] of days){
+      s+=`## ${d}\n`;
+      s+=`- Energy：${x.energy ?? '未记'}/10\n`;
+      if(x.sleepHours) s+=`- 睡眠：${x.sleepHours} 小时\n`;
+      if(x.workDone) s+=`- Work：${x.workDone}\n`;
+      if(x.joy) s+=`- Joy：${x.joy}\n`;
+      if(x.meals) s+=`- 三餐：${x.meals}\n`;
+      if(x.eating) s+=`- 进食感受：${x.eating}\n`;
+      if(x.movement) s+=`- 活动：${x.movement}\n`;
+      if(x.fact||x.interpretation||x.action){
+        s+=`- 刺猬时刻：\n  - 事实：${x.fact||''}\n  - 解释：${x.interpretation||''}\n  - 行动：${x.action||''}\n`;
+      }
+      if(x.people) s+=`- People：${x.people}\n`;
+      if(x.boundary) s+=`- 边界：${x.boundary}\n`;
+      s+='\n';
+    }
+    if(data.weeks[wk]){
+      const w=data.weeks[wk]; s+=`# 本周补充（周起始 ${wk}）\n- SAR学习：${w.sarCount||0} 次；${w.sarNote||''}\n- 考公：${w.examMinutes||0} 分钟；${w.examNote||''}\n- 技术结果：${w.techArtifact||''}\n- 社交：${w.social||''} ${w.socialNote||''}\n- 本周反思：${w.weekReflection||''}\n\n`;
+    }
+    if(data.months[mk]){
+      const m=data.months[mk]; s+=`# 本月补充（${mk}）\n- 当前工作路线评分 [兴趣/省电/成长/时间友好/收入稳定/地点]：${(m.jobScores||[]).join('/')}\n- 考公路线评分 [兴趣/省电/成长/时间友好/收入稳定/地点]：${(m.examScores||[]).join('/')}\n- 睡眠：${m.monthSleep||''}\n- 进食：${m.monthEating||''}\n- 身体信号：${m.bodySignal||''}\n- 下月实验：${m.nextExperiment||''}\n`;
+    }
+    return s;
+  }
+  function refreshPreview(){$('mdPreview').value=makeMD()}
+  $('refreshPreview').onclick=refreshPreview;
+  $('exportMD').onclick=()=>download('WorkBuddy_最近30天_给ChatGPT.md',makeMD(),'text/markdown;charset=utf-8');
+  $('exportJSON').onclick=()=>download('WorkBuddy_完整备份.json',JSON.stringify(data,null,2),'application/json;charset=utf-8');
+  $('exportCSV').onclick=()=>{
+    const cols=['date','energy','sleepHours','screenStop','workDone','joy','meals','eating','movement','fact','interpretation','action','people','boundary'];
+    const q=v=>'"'+String(v??'').replace(/"/g,'""').replace(/\n/g,' ')+'"';
+    const rows=[cols.join(',')];
+    Object.entries(data.days).sort().forEach(([date,x])=>rows.push(cols.map(c=>q(c==='date'?date:x[c])).join(',')));
+    download('WorkBuddy_每日记录.csv','\ufeff'+rows.join('\n'),'text/csv;charset=utf-8');
+  };
+  $('importJSON').onchange=async(e)=>{
+    const f=e.target.files[0]; if(!f)return;
+    try{
+      const imported=JSON.parse(await f.text());
+      if(!confirm('导入会覆盖同日期记录，是否继续？')) return;
+      data.days={...data.days,...(imported.days||{})}; data.weeks={...data.weeks,...(imported.weeks||{})}; data.months={...data.months,...(imported.months||{})};
+      if(imported.settings?.reminders) data.settings.reminders=imported.settings.reminders;
+      if(imported.settings?.mantra) data.settings.mantra=imported.settings.mantra;
+      persist(); loadDay();loadWeek();loadMonth();alert('导入完成。');
+    }catch(err){alert('导入失败：不是有效的 WorkBuddy JSON。')}
+    e.target.value='';
+  };
+
+  // profile
+  $('personalMantra').value=data.settings.mantra;
+  $('saveMantra').onclick=()=>{data.settings.mantra=$('personalMantra').value.trim()||defaultData.settings.mantra;persist();alert('已保存。')};
+
+  // reload week/month when date changes
+  $('currentDate').addEventListener('change',()=>{loadWeek();loadMonth()});
+
+  loadDay(); loadWeek(); loadMonth(); renderReminders();
+})();
+</script>
+\n<script>\n(function(){\n  function status(t,c){const el=document.getElementById('cloudStatus');if(!el)return;el.textContent='云同步：'+t;el.className=c||'muted'}\n  window.__wbStatus=status;\n  document.getElementById('cloudSetCode').onclick=async()=>{\n    const old=window.__wbGetCode();\n    const c=prompt('请输入 WorkBuddy 同步码。电脑和手机使用同一个。',old||'');\n    if(c===null)return;\n    window.__wbSetCode(c);\n    try{await window.__wbCloudPull();status('已连接','ok');sessionStorage.removeItem('wb_cloud_loaded');location.reload()}catch(e){status('失败：'+e.message,'err');alert(e.message)}\n  };\n  document.getElementById('cloudSyncNow').onclick=async()=>{\n    try{await window.__wbCloudPull();await window.__wbCloudPush();status('已同步','ok');sessionStorage.removeItem('wb_cloud_loaded');location.reload()}catch(e){status('失败：'+e.message,'err')}\n  };\n  if(window.__wbGetCode()){\n    status('正在读取云端…','muted');\n    window.__wbCloudPull().then(()=>{status('已同步','ok');if(!sessionStorage.getItem('wb_cloud_loaded')){sessionStorage.setItem('wb_cloud_loaded','1');location.reload()}}).catch(e=>status('失败：'+e.message,'err'));\n  }\n})();\n</script>\n</body>
+</html>
