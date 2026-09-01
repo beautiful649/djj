@@ -103,7 +103,56 @@
     .cloudbar button{border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;padding:5px 9px;border-radius:999px}
     .cloudbar .ok{color:#bfe2c8}.cloudbar .err{color:#ffd0d0}.cloudbar .muted{color:#d7dde1}
   </style>
-\n<script>\n(function(){\n  const WB_KEY='workbuddy_v1';\n  const CODE_KEY='workbuddy_sync_code';\n  const ENDPOINT='https://uxcvllaycaknojgkqqss.supabase.co/functions/v1/workbuddy';\n  const rawSet=Storage.prototype.setItem;\n  let timer=null;\n  window.__wbCloud={busy:false};\n  function code(){return localStorage.getItem(CODE_KEY)||''}\n  async function api(body){\n    const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,code:code()})});\n    const j=await r.json().catch(()=>({error:'服务器返回格式异常'}));\n    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));\n    return j;\n  }\n  function timeOf(x){const n=Date.parse(x?.updatedAt||x?._updatedAt||'');return Number.isFinite(n)?n:0}\n  function mergeRec(a={},b={}){const out={...(a||{})};for(const [k,v] of Object.entries(b||{})){if(!out[k]||timeOf(v)>=timeOf(out[k]))out[k]=v}return out}\n  function mergeState(local={},remote={}){return {days:mergeRec(local.days,remote.days),weeks:mergeRec(local.weeks,remote.weeks),months:mergeRec(local.months,remote.months),settings:{...(remote.settings||{}),...(local.settings||{})}}}\n  async function pushNow(){\n    if(!code()||window.__wbCloud.busy)return;\n    const raw=localStorage.getItem(WB_KEY); if(!raw)return;\n    try{window.__wbCloud.busy=true;window.__wbStatus&&window.__wbStatus('正在同步…','muted');const j=await api({action:'push',payload:JSON.parse(raw)});rawSet.call(localStorage,WB_KEY,JSON.stringify(j.payload));window.__wbStatus&&window.__wbStatus('已同步','ok')}\n    catch(e){window.__wbStatus&&window.__wbStatus('同步失败：'+e.message,'err')}finally{window.__wbCloud.busy=false}\n  }\n  Storage.prototype.setItem=function(k,v){rawSet.call(this,k,v);if(this===localStorage&&k===WB_KEY&&code()&&!window.__wbCloud.busy){clearTimeout(timer);timer=setTimeout(pushNow,500)}};\n  window.__wbCloudPush=pushNow;\n  window.__wbCloudPull=async function(){if(!code())throw new Error('请先设置同步码');const j=await api({action:'pull'});const local=JSON.parse(localStorage.getItem(WB_KEY)||'{}');const merged=mergeState(local,j.payload||{});rawSet.call(localStorage,WB_KEY,JSON.stringify(merged));return merged};\n  window.__wbSetCode=c=>rawSet.call(localStorage,CODE_KEY,String(c||'').trim());\n  window.__wbGetCode=code;\n})();\n</script>\n</head>
+
+<script>
+(function(){
+  const WB_KEY='workbuddy_v1';
+  const CODE_KEY='workbuddy_sync_code';
+  const ENDPOINT='https://uxcvllaycaknojgkqqss.supabase.co/functions/v1/workbuddy';
+  const rawSet=Storage.prototype.setItem;
+  let timer=null;
+  window.__wbCloud={busy:false};
+  function code(){return localStorage.getItem(CODE_KEY)||''}
+  async function api(body){
+    const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,code:code()})});
+    const j=await r.json().catch(()=>({error:'服务器返回格式异常'}));
+    if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+    return j;
+  }
+  function timeOf(x){const n=Date.parse(x?.updatedAt||x?._updatedAt||'');return Number.isFinite(n)?n:0}
+  function mergeRec(a={},b={}){const out={...(a||{})};for(const [k,v] of Object.entries(b||{})){if(!out[k]||timeOf(v)>=timeOf(out[k]))out[k]=v}return out}
+  function mergeState(local={},remote={}){return {days:mergeRec(local.days,remote.days),weeks:mergeRec(local.weeks,remote.weeks),months:mergeRec(local.months,remote.months),settings:{...(remote.settings||{}),...(local.settings||{})}}}
+  async function pushNow(){
+    if(!code()||window.__wbCloud.busy)return;
+    const raw=localStorage.getItem(WB_KEY); if(!raw)return;
+    try{
+      window.__wbCloud.busy=true;
+      window.__wbStatus&&window.__wbStatus('正在同步…','muted');
+      const j=await api({action:'push',payload:JSON.parse(raw)});
+      rawSet.call(localStorage,WB_KEY,JSON.stringify(j.payload));
+      window.__wbStatus&&window.__wbStatus('已同步','ok');
+    }catch(e){
+      window.__wbStatus&&window.__wbStatus('同步失败：'+e.message,'err');
+    }finally{window.__wbCloud.busy=false}
+  }
+  Storage.prototype.setItem=function(k,v){
+    rawSet.call(this,k,v);
+    if(this===localStorage&&k===WB_KEY&&code()&&!window.__wbCloud.busy){clearTimeout(timer);timer=setTimeout(pushNow,500)}
+  };
+  window.__wbCloudPush=pushNow;
+  window.__wbCloudPull=async function(){
+    if(!code())throw new Error('请先设置同步码');
+    const j=await api({action:'pull'});
+    const local=JSON.parse(localStorage.getItem(WB_KEY)||'{}');
+    const merged=mergeState(local,j.payload||{});
+    rawSet.call(localStorage,WB_KEY,JSON.stringify(merged));
+    return merged;
+  };
+  window.__wbSetCode=c=>rawSet.call(localStorage,CODE_KEY,String(c||'').trim());
+  window.__wbGetCode=code;
+})();
+</script>
+</head>
 <body>
 <div class="cloudbar">
   <span id="cloudStatus" class="muted">云同步：未设置</span>
@@ -717,5 +766,54 @@
   loadDay(); loadWeek(); loadMonth(); renderReminders();
 })();
 </script>
-\n<script>\n(function(){\n  function status(t,c){const el=document.getElementById('cloudStatus');if(!el)return;el.textContent='云同步：'+t;el.className=c||'muted'}\n  window.__wbStatus=status;\n  document.getElementById('cloudSetCode').onclick=async()=>{\n    const old=window.__wbGetCode();\n    const c=prompt('请输入 WorkBuddy 同步码。电脑和手机使用同一个。',old||'');\n    if(c===null)return;\n    window.__wbSetCode(c);\n    try{await window.__wbCloudPull();status('已连接','ok');sessionStorage.removeItem('wb_cloud_loaded');location.reload()}catch(e){status('失败：'+e.message,'err');alert(e.message)}\n  };\n  document.getElementById('cloudSyncNow').onclick=async()=>{\n    try{await window.__wbCloudPull();await window.__wbCloudPush();status('已同步','ok');sessionStorage.removeItem('wb_cloud_loaded');location.reload()}catch(e){status('失败：'+e.message,'err')}\n  };\n  if(window.__wbGetCode()){\n    status('正在读取云端…','muted');\n    window.__wbCloudPull().then(()=>{status('已同步','ok');if(!sessionStorage.getItem('wb_cloud_loaded')){sessionStorage.setItem('wb_cloud_loaded','1');location.reload()}}).catch(e=>status('失败：'+e.message,'err'));\n  }\n})();\n</script>\n</body>
+
+<script>
+(function(){
+  function status(t,c){
+    const el=document.getElementById('cloudStatus');
+    if(!el)return;
+    el.textContent='云同步：'+t;
+    el.className=c||'muted';
+  }
+  window.__wbStatus=status;
+  document.getElementById('cloudSetCode').onclick=async()=>{
+    const old=window.__wbGetCode();
+    const c=prompt('请输入 WorkBuddy 同步码。电脑和手机使用同一个。',old||'');
+    if(c===null)return;
+    window.__wbSetCode(c);
+    try{
+      await window.__wbCloudPull();
+      status('已连接','ok');
+      sessionStorage.removeItem('wb_cloud_loaded');
+      location.reload();
+    }catch(e){
+      status('失败：'+e.message,'err');
+      alert(e.message);
+    }
+  };
+  document.getElementById('cloudSyncNow').onclick=async()=>{
+    try{
+      await window.__wbCloudPull();
+      await window.__wbCloudPush();
+      status('已同步','ok');
+      sessionStorage.removeItem('wb_cloud_loaded');
+      location.reload();
+    }catch(e){
+      status('失败：'+e.message,'err');
+      alert(e.message);
+    }
+  };
+  if(window.__wbGetCode()){
+    status('正在读取云端…','muted');
+    window.__wbCloudPull().then(()=>{
+      status('已同步','ok');
+      if(!sessionStorage.getItem('wb_cloud_loaded')){
+        sessionStorage.setItem('wb_cloud_loaded','1');
+        location.reload();
+      }
+    }).catch(e=>status('失败：'+e.message,'err'));
+  }
+})();
+</script>
+</body>
 </html>
