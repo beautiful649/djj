@@ -142,9 +142,28 @@
     @media(max-width:1000px){.persona-layout{grid-template-columns:230px 1fr}.persona-right{grid-column:1/-1;position:static;max-height:none}.persona-chat{height:58vh}}
     @media(max-width:760px){.persona-layout{grid-template-columns:1fr}.persona-side{position:static;max-height:none}.persona-left{order:2}.persona-main{order:1}.persona-right{order:3}.persona-chat{height:56vh;min-height:350px}.persona-bubble{max-width:90%}.persona-preset{grid-template-columns:1fr 1fr}}
 
+
+    /* WorkBuddy cloud sync: restored in October 2026. */
+    .wb-sync-bar{background:#263642;color:#f4f7f9;padding:9px 14px;position:relative;z-index:10}
+    .wb-sync-inner{max-width:1100px;margin:auto;display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap}
+    .wb-sync-bar button{padding:6px 12px;background:transparent;color:#fff;border:1px solid #8193a2;border-radius:999px;font-size:13px}
+    .wb-sync-bar button:hover,.wb-sync-bar button:focus-visible{background:#415466}
+    #wbSyncStatus{font-size:13px;overflow-wrap:anywhere}
+    #wbSyncStatus[data-kind="error"]{color:#ffcdca}
+    #wbSyncStatus[data-kind="ok"]{color:#bfe9cf}
+    @media(max-width:600px){.wb-sync-inner{gap:6px} .wb-sync-bar button{font-size:12px;padding:5px 10px}}
   </style>
 </head>
 <body>
+<div class="wb-sync-bar" role="region" aria-label="WorkBuddy 云同步">
+  <div class="wb-sync-inner">
+    <span id="wbSyncStatus" role="status" aria-live="polite">云同步：检查中…</span>
+    <button type="button" id="wbSetupSync">设置同步码</button>
+    <button type="button" id="wbSyncNow">立即同步</button>
+    <button type="button" id="wbDeviceBackup">备份本机记录</button>
+  </div>
+</div>
+
 <div class="shell">
   <header>
     <div class="row">
@@ -545,7 +564,7 @@
       return d;
     }catch(e){return clone(defaultData)}
   }
-  function persist(){localStorage.setItem(KEY, JSON.stringify(data))}
+  function persist(){localStorage.setItem(KEY, JSON.stringify(data)); if(window.__wbQueueSync)window.__wbQueueSync()}
   function isoDate(d=new Date()){
     const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);
     return z.toISOString().slice(0,10);
@@ -704,6 +723,7 @@
   $('historyRange').onchange=renderHistory;
 
   // Reminders
+  function settingsChanged(){data.settings.updatedAt=new Date().toISOString();persist()}
   function renderReminders(){
     const box=$('reminderList'); box.innerHTML='';
     data.settings.reminders.forEach((r,i)=>{
@@ -711,11 +731,11 @@
       row.innerHTML=`<input type="time" value="${esc(r.time)}" data-i="${i}" class="rtime"><input type="text" value="${esc(r.text)}" data-i="${i}" class="rtext"><button class="btn danger" data-del="${i}">删除</button>`;
       box.appendChild(row);
     });
-    box.querySelectorAll('.rtime').forEach(el=>el.onchange=()=>{data.settings.reminders[Number(el.dataset.i)].time=el.value;persist()});
-    box.querySelectorAll('.rtext').forEach(el=>el.onchange=()=>{data.settings.reminders[Number(el.dataset.i)].text=el.value;persist()});
-    box.querySelectorAll('[data-del]').forEach(el=>el.onclick=()=>{data.settings.reminders.splice(Number(el.dataset.del),1);persist();renderReminders()});
+    box.querySelectorAll('.rtime').forEach(el=>el.onchange=()=>{data.settings.reminders[Number(el.dataset.i)].time=el.value;settingsChanged()});
+    box.querySelectorAll('.rtext').forEach(el=>el.onchange=()=>{data.settings.reminders[Number(el.dataset.i)].text=el.value;settingsChanged()});
+    box.querySelectorAll('[data-del]').forEach(el=>el.onclick=()=>{data.settings.reminders.splice(Number(el.dataset.del),1);settingsChanged();renderReminders()});
   }
-  $('addReminder').onclick=()=>{data.settings.reminders.push({time:'12:00',text:'回到自己：现在最小需要做什么？'});persist();renderReminders()};
+  $('addReminder').onclick=()=>{data.settings.reminders.push({time:'12:00',text:'回到自己：现在最小需要做什么？'});settingsChanged();renderReminders()};
   $('enableNotify').onclick=async()=>{
     if(!('Notification' in window)){alert('当前浏览器不支持系统通知。可以使用“导出到系统日历”。');return}
     const p=await Notification.requestPermission(); alert(p==='granted'?'已允许。网页打开时会按时提醒。':'没有获得通知权限。');
@@ -801,6 +821,7 @@
       data.days={...data.days,...(imported.days||{})}; data.weeks={...data.weeks,...(imported.weeks||{})}; data.months={...data.months,...(imported.months||{})};
       if(imported.settings?.reminders) data.settings.reminders=imported.settings.reminders;
       if(imported.settings?.mantra) data.settings.mantra=imported.settings.mantra;
+      if(imported.settings) data.settings.updatedAt=new Date().toISOString();
       persist(); loadDay();loadWeek();loadMonth();alert('导入完成。');
     }catch(err){alert('导入失败：不是有效的 WorkBuddy JSON。')}
     e.target.value='';
@@ -808,12 +829,154 @@
 
   // profile
   $('personalMantra').value=data.settings.mantra;
-  $('saveMantra').onclick=()=>{data.settings.mantra=$('personalMantra').value.trim()||defaultData.settings.mantra;persist();alert('已保存。')};
+  $('saveMantra').onclick=()=>{data.settings.mantra=$('personalMantra').value.trim()||defaultData.settings.mantra;settingsChanged();alert('已保存。')};
 
   // reload week/month when date changes
   $('currentDate').addEventListener('change',()=>{loadWeek();loadMonth()});
 
   loadDay(); loadWeek(); loadMonth(); renderReminders();
+
+  // ===== Cloud sync: WorkBuddy, distinct from Persona Lab / soulroom =====
+  const WB_SYNC_ENDPOINT='https://uxcvllaycaknojgkqqss.supabase.co/functions/v1/workbuddy';
+  const WB_CODE_KEY='workbuddy_sync_code';
+  const WB_SNAPSHOT_KEY='workbuddy_before_sync_repair_20261008';
+  let wbSyncPending=false, wbSyncBusy=false, wbSyncTimer=null;
+  let wbDraftDirty=false;
+  const wbStatus=$('wbSyncStatus');
+  function wbSetStatus(message,kind=''){
+    wbStatus.textContent='云同步：'+message;
+    wbStatus.dataset.kind=kind;
+  }
+  function wbGetCode(){return (localStorage.getItem(WB_CODE_KEY)||'').trim()}
+  window.__wbGetCode=wbGetCode;
+  window.__wbSetCode=code=>localStorage.setItem(WB_CODE_KEY,String(code||'').trim());
+  function wbTimestamp(x){const n=Date.parse(x?.updatedAt||x?._updatedAt||'');return Number.isFinite(n)?n:0}
+  function wbMergeRecords(cloud={},local={}){
+    const result={...(cloud||{})};
+    Object.entries(local||{}).forEach(([key,value])=>{
+      if(!result[key] || wbTimestamp(value)>=wbTimestamp(result[key])) result[key]=value;
+    });
+    return result;
+  }
+  function wbMergeSettings(cloud={},local={}){
+    const ct=wbTimestamp(cloud),lt=wbTimestamp(local);
+    const chosen=lt>=ct?local:cloud;
+    const result={...(chosen||{})};
+    // Per-device notification history is not a synced setting.
+    result.notified={...(local?.notified||{})};
+    if(!result.reminders)result.reminders=clone(defaultData.settings.reminders);
+    if(!result.mantra)result.mantra=defaultData.settings.mantra;
+    return result;
+  }
+  function wbMergeState(cloud={},local={}){
+    return {
+      days:wbMergeRecords(cloud.days,local.days),
+      weeks:wbMergeRecords(cloud.weeks,local.weeks),
+      months:wbMergeRecords(cloud.months,local.months),
+      settings:wbMergeSettings(cloud.settings,local.settings)
+    };
+  }
+  function wbReadLocal(){
+    try{return JSON.parse(localStorage.getItem(KEY)||'null')||clone(defaultData)}
+    catch{return clone(defaultData)}
+  }
+  function wbTakeRecoverySnapshot(){
+    if(localStorage.getItem(WB_SNAPSHOT_KEY))return;
+    try{
+      localStorage.setItem(WB_SNAPSHOT_KEY,JSON.stringify({createdAt:new Date().toISOString(),workbuddy:wbReadLocal()}));
+    }catch(e){console.warn('Unable to make sync recovery snapshot:',e)}
+  }
+  async function wbRequest(code,action,payload){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),18000);
+    try{
+      const response=await fetch(WB_SYNC_ENDPOINT,{
+        method:'POST',cache:'no-store',signal:controller.signal,
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({code,action,...(payload?{payload}:{})})
+      });
+      const body=await response.json().catch(()=>({error:'服务器响应不是有效 JSON'}));
+      if(!response.ok) throw new Error(body.error||('HTTP '+response.status));
+      if(!body||!body.payload||typeof body.payload!=='object')throw new Error('服务器未返回同步数据');
+      return body.payload;
+    }finally{clearTimeout(timer)}
+  }
+  function wbRefreshUI(){
+    if(wbDraftDirty)return;
+    loadDay();loadWeek();loadMonth();
+    $('personalMantra').value=data.settings.mantra||defaultData.settings.mantra;
+    if(document.querySelector('#history.view.active'))renderHistory();
+    if(document.querySelector('#export.view.active'))refreshPreview();
+    if(document.querySelector('#reminders.view.active'))renderReminders();
+  }
+  async function wbDoSync(showErrors=true){
+    const code=wbGetCode();
+    if(!code){wbSetStatus('未设置');if(showErrors)alert('请先点“设置同步码”。');return false}
+    if(wbSyncBusy){wbSyncPending=true;return false}
+    wbSyncBusy=true;
+    wbSetStatus('同步中…');
+    try{
+      wbTakeRecoverySnapshot();
+      // Pull before push: reconcile unsynced records from both devices.
+      const remote=await wbRequest(code,'pull');
+      const beforeSend=wbReadLocal();
+      const payload=wbMergeState(remote,beforeSend);
+      // Local notification status must remain device-local.
+      const remoteMerge=await wbRequest(code,'push',payload);
+      const changedDuringRequest=JSON.stringify(wbReadLocal())!==JSON.stringify(beforeSend);
+      const currentLocal=wbReadLocal();
+      data=wbMergeState(remoteMerge,currentLocal);
+      localStorage.setItem(KEY,JSON.stringify(data));
+      wbRefreshUI();
+      wbSetStatus('已同步 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),'ok');
+      if(changedDuringRequest)wbSyncPending=true;
+      return true;
+    }catch(e){
+      const reason=e?.name==='AbortError'?'网络超时':(e?.message||String(e));
+      wbSetStatus('失败 · '+reason,'error');
+      if(showErrors)alert('WorkBuddy 同步失败：'+reason+'。本机记录没有被删除。');
+      return false;
+    }finally{
+      wbSyncBusy=false;
+      if(wbSyncPending){wbSyncPending=false;window.__wbQueueSync()}
+    }
+  }
+  window.__wbQueueSync=()=>{
+    if(!wbGetCode())return;
+    clearTimeout(wbSyncTimer);
+    wbSyncTimer=setTimeout(()=>wbDoSync(false),1500);
+  };
+  $('wbSetupSync').onclick=async()=>{
+    const candidate=prompt('输入已有的 WorkBuddy 同步码（电脑和手机使用同一个）。不会把它写进 GitHub 代码：','');
+    if(candidate===null)return;
+    const code=candidate.trim();
+    if(!code){alert('同步码不能为空，原有设置未改变。');return}
+    wbSetStatus('验证同步码…');
+    try{
+      await wbRequest(code,'pull');
+      window.__wbSetCode(code);
+      wbSetStatus('已验证，准备同步','ok');
+      await wbDoSync(true);
+    }catch(e){
+      wbSetStatus('同步码验证失败','error');
+      alert('同步码验证失败：'+(e?.message||String(e))+'。原有设置未改变。');
+    }
+  };
+  $('wbSyncNow').onclick=async()=>{
+    if(!wbGetCode()){$('wbSetupSync').click();return}
+    await wbDoSync(true);
+  };
+  $('wbDeviceBackup').onclick=()=>{
+    // Direct copy of the current device's raw data. Importable via Export > Restore JSON.
+    download('WorkBuddy_本机记录备份_'+isoDate()+'.json',JSON.stringify(wbReadLocal(),null,2),'application/json;charset=utf-8');
+  };
+  document.querySelectorAll('#today input,#today textarea,#today select,#week input,#week textarea,#week select,#month input,#month textarea,#month select')
+    .forEach(x=>x.addEventListener('input',()=>{wbDraftDirty=true}));
+  ['saveToday','saveWeek','saveMonth'].forEach(id=>$(id).addEventListener('click',()=>{wbDraftDirty=false}));
+  $('currentDate').addEventListener('change',()=>{wbDraftDirty=false});
+  window.addEventListener('online',()=>window.__wbQueueSync());
+  if(wbGetCode())wbDoSync(false);else wbSetStatus('未设置');
+
 })();
 </script>
 
